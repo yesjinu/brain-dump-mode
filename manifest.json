@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "brain-dump-mode",
+	"name": "Brain Dump Mode",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Done is better than perfect. This plugin helps you 'COMPLETE' your first-messy-draft before you make it 'PERFECT'. Once you turn on the Brain Dump Mode, your delete key will be DISABLED and all you can do is JUST BURN YOUR KEYBOARDS🔥",
+	"author": "yesjinu",
+	"authorUrl": "https://yesjinu.github.io",
 	"isDesktopOnly": false
 }
