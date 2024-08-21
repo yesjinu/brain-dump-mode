@@ -62,6 +62,13 @@ export default class BrainDumpMode extends Plugin {
 			}
 		});
 
+		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+			if (this.settings.isEnabled) {
+				this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
+				new Notice(`There's no going back. Move FORWARD!`)
+			}
+		})
+
 	}
 
 	onunload() {
