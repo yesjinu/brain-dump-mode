@@ -42,6 +42,13 @@ export default class BrainDumpMode extends Plugin {
 		 */
 		this.registerDomEvent(document, 'keydown', (evt: KeyboardEvent) => {
 			if (this.settings.isEnabled) {
+				if (evt.key === 'ArrowLeft' || evt.key === 'ArrowUp') {
+					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
+					evt.preventDefault();
+					new Notice(`There's NO going back 🔥`)
+					return;
+				}
+				
 				if (evt.key === 'Backspace' || evt.key === 'Delete') {
 					this.app.workspace.activeEditor?.editor?.setValue(`${this.lastContent}`)
 					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
