@@ -46,6 +46,7 @@ export default class BrainDumpMode extends Plugin {
 					this.app.workspace.activeEditor?.editor?.setValue(`${this.lastContent}`)
 					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
 					evt.preventDefault();
+					new Notice(`Brain Dump Mode is ON 🔥`) // TODO: Cheer up users with different sentences
 					return;
 				}
 
