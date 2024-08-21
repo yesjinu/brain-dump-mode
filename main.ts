@@ -35,6 +35,11 @@ export default class BrainDumpMode extends Plugin {
 
 		this.addSettingTab(new BrainDumpSettingTab(this.app, this));
 
+		/**
+		 * [HOW IT WORKS]
+		 * Everytime normal keydown event is detected, whole editor content will be saved in `lastContent` variable.
+		 * If 'Backspace' or 'Delete' event is detected, the saved `lastContent` will be replace the whole content so that nothing seems deleted.
+		 */
 		this.registerDomEvent(document, 'keydown', (evt: KeyboardEvent) => {
 			if (this.settings.isEnabled) {
 				if (evt.key === 'Backspace' || evt.key === 'Delete') {
