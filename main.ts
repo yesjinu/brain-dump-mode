@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto';
 import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 
@@ -45,7 +46,7 @@ export default class BrainDumpMode extends Plugin {
 				if (evt.key === 'ArrowLeft' || evt.key === 'ArrowUp') {
 					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
 					evt.preventDefault();
-					new Notice(`There's NO going back 🔥`)
+					this.alertBrainDumpModeIsOn();
 					return;
 				}
 				
@@ -53,7 +54,7 @@ export default class BrainDumpMode extends Plugin {
 					this.app.workspace.activeEditor?.editor?.setValue(`${this.lastContent}`)
 					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
 					evt.preventDefault();
-					new Notice(`Brain Dump Mode is ON 🔥`) // TODO: Cheer up users with different sentences
+					this.alertBrainDumpModeIsOn();
 					return;
 				}
 				
@@ -65,10 +66,25 @@ export default class BrainDumpMode extends Plugin {
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
 			if (this.settings.isEnabled) {
 				this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
-				new Notice(`There's no going back. Move FORWARD!`)
+				this.alertBrainDumpModeIsOn();
 			}
 		})
 
+	}
+
+	alertBrainDumpModeIsOn() {
+		const messages = [
+			`Brain Dump Mode is ON 🔥`,
+			`There's no going back. Move FORWARD!`,
+			`You can do this!`,
+			// TODO: Get from user
+		]
+		
+		new Notice(this.randomSelect(messages));
+	}
+
+	randomSelect(arr: string[]): string {
+		return arr[randomInt(0, arr.length)]
 	}
 
 	onunload() {
