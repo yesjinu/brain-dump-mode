@@ -56,8 +56,9 @@ export default class BrainDumpMode extends Plugin {
 					new Notice(`Brain Dump Mode is ON 🔥`) // TODO: Cheer up users with different sentences
 					return;
 				}
-
-				this.lastContent = `${this.app.workspace.activeEditor?.editor?.getValue()}${evt.key}`
+				
+				const lastWord = (evt.key === 'Enter') ? '' : evt.key
+				this.lastContent = `${this.app.workspace.activeEditor?.editor?.getValue()}${lastWord}`
 			}
 		});
 
