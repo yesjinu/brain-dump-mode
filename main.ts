@@ -131,7 +131,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Enable Brain Dump Mode')
-			.setDesc("If this option turned on, your 'delete' key will be disabled")
+			.setDesc("If turned on, delete key will be disabled")
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.isEnabled)
 				.onChange(async (value) => {
