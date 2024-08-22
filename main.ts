@@ -75,8 +75,8 @@ export default class BrainDumpMode extends Plugin {
 	alertBrainDumpModeIsOn() {
 		const messages = [
 			`Brain Dump Mode is ON 🔥`,
-			`There's no going back. Move FORWARD!`,
-			`You can do this!`,
+			// `There's no going back. Move FORWARD!`,
+			// `You can do this!`,
 			// TODO: Get from user
 		]
 		
