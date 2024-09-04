@@ -3,17 +3,20 @@ import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 
 interface BrainDumpSettings {
-	isEnabled: boolean;
+	backspaceDisabled: boolean;
+	runnerModeEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: BrainDumpSettings = {
-	isEnabled: false
+	backspaceDisabled: false,
+	runnerModeEnabled: false,
 }
 
 export default class BrainDumpMode extends Plugin {
 	settings: BrainDumpSettings;
 	statusBarItemEl: HTMLElement;
 	lastContent: string | undefined = undefined;
+	wordTimestamps: number[] = [];
 
 	async onload() {
 		await this.loadSettings();
@@ -42,7 +45,13 @@ export default class BrainDumpMode extends Plugin {
 		 * If 'Backspace' or 'Delete' event is detected, the saved `lastContent` will be replace the whole content so that nothing seems deleted.
 		 */
 		this.registerDomEvent(document, 'keydown', (evt: KeyboardEvent) => {
-			if (this.settings.isEnabled) {
+			if (this.settings.runnerModeEnabled) {
+				const currentTime = Date.now();
+				this.wordTimestamps.push(currentTime);
+				this.calculateRecentWPT();
+			}
+
+			if (this.settings.backspaceDisabled) {
 				if (evt.key === 'ArrowLeft' || evt.key === 'ArrowUp') {
 					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
 					evt.preventDefault();
@@ -64,12 +73,29 @@ export default class BrainDumpMode extends Plugin {
 		});
 
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			if (this.settings.isEnabled) {
+			if (this.settings.backspaceDisabled) {
 				this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
 				this.alertBrainDumpModeIsOn();
 			}
 		})
 
+		this.registerInterval(
+			window.setInterval(() => {
+			if (this.settings.runnerModeEnabled) {
+				this.calculateRecentWPT();
+			}
+		}, 1000)); // Check every 10 seconds
+
+	}
+
+	calculateRecentWPT() {
+		const SLIDING_WINDOW = 4000
+		const SLIDING_WINDOW_IN_SECONDS = SLIDING_WINDOW / 1000;
+		const MULTIIPLE = 60 / SLIDING_WINDOW_IN_SECONDS;
+		const sometimeAgo = Date.now() - SLIDING_WINDOW;
+		this.wordTimestamps = this.wordTimestamps.filter(timestamp => timestamp > sometimeAgo);
+		const wordsInLast4Seconds = this.wordTimestamps.length;
+		this.statusBarItemEl.setText(`Typing speed: ${wordsInLast4Seconds * MULTIIPLE} CPM`);
 	}
 
 	alertBrainDumpModeIsOn() {
@@ -96,7 +122,8 @@ export default class BrainDumpMode extends Plugin {
 	}
 
 	toggleBrainDumpMode() {
-		this.settings.isEnabled = !this.settings.isEnabled;
+		this.settings.backspaceDisabled = !this.settings.backspaceDisabled;
+		this.settings.runnerModeEnabled = !this.settings.runnerModeEnabled;
 		this.saveSettings();
 		this.updateStatusBar();
 		this.displayNotice();
@@ -107,11 +134,11 @@ export default class BrainDumpMode extends Plugin {
 	}
 
 	updateStatusBar() {
-		this.statusBarItemEl.setText(`Brain Dump Mode ${this.settings.isEnabled ? '✅' : '❌'}`);
+		this.statusBarItemEl.setText(`Brain Dump Mode ${this.settings.backspaceDisabled ? '✅' : '❌'}`);
 	}
 
 	displayNotice() {
-		const status = this.settings.isEnabled ? '✅' : '❌';
+		const status = this.settings.backspaceDisabled ? '✅' : '❌';
 		new Notice(`Brain Dump Mode ${status}`);
 	}
 }
@@ -133,9 +160,23 @@ class BrainDumpSettingTab extends PluginSettingTab {
 			.setName('Enable brain dump mode')
 			.setDesc("If turned on, delete key will be disabled")
 			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.isEnabled)
+				.setValue(this.plugin.settings.backspaceDisabled)
 				.onChange(async (value) => {
-					this.plugin.settings.isEnabled = value;
+					this.plugin.settings.backspaceDisabled = value;
+					await this.plugin.saveSettings();
+					this.plugin.updateStatusBar();
+					this.plugin.displayNotice();
+				}
+				)
+			);
+
+			new Setting(containerEl)
+			.setName('Enable runner mode')
+			.setDesc("If turned on, runner mode enabled")
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.runnerModeEnabled)
+				.onChange(async (value) => {
+					this.plugin.settings.runnerModeEnabled = value;
 					await this.plugin.saveSettings();
 					this.plugin.updateStatusBar();
 					this.plugin.displayNotice();
