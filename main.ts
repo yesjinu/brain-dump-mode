@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS: BrainDumpSettings = {
 export default class BrainDumpMode extends Plugin {
 	settings: BrainDumpSettings;
 	statusBarItemEl: HTMLElement;
-	lastContent: string | undefined = undefined;
+	lastSnapshot: string | undefined = undefined;
 	wordTimestamps: number[] = [];
 
 	async onload() {
@@ -39,40 +39,37 @@ export default class BrainDumpMode extends Plugin {
 
 		this.addSettingTab(new BrainDumpSettingTab(this.app, this));
 
-		/**
-		 * [HOW IT WORKS]
-		 * Everytime normal keydown event is detected, whole editor content will be saved in `lastContent` variable.
-		 * If 'Backspace' or 'Delete' event is detected, the saved `lastContent` will be replace the whole content so that nothing seems deleted.
-		 */
+
 		this.registerDomEvent(document, 'keydown', (evt: KeyboardEvent) => {
 			if (this.settings.runnerModeEnabled) {
 				const currentTime = Date.now();
 				this.wordTimestamps.push(currentTime);
-				this.calculateRecentWPT();
 			}
 
 			if (this.settings.backspaceDisabled) {
 				if (evt.key === 'ArrowLeft' || evt.key === 'ArrowUp') {
+					// Disable moving cursor to left or up
 					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
-					evt.preventDefault();
 					this.alertBrainDumpModeIsOn();
 					return;
 				}
-				
+
 				if (evt.key === 'Backspace' || evt.key === 'Delete') {
-					this.app.workspace.activeEditor?.editor?.setValue(`${this.lastContent}`)
+					// Disable backspace and delete by recovering last snapshot
+					this.app.workspace.activeEditor?.editor?.setValue(`${this.lastSnapshot}`)
 					this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
-					evt.preventDefault();
 					this.alertBrainDumpModeIsOn();
 					return;
 				}
-				
+
+				// Save content snapshot every key press
 				const lastWord = (evt.key === 'Enter') ? '' : evt.key
-				this.lastContent = `${this.app.workspace.activeEditor?.editor?.getValue()}${lastWord}`
+				this.lastSnapshot = `${this.app.workspace.activeEditor?.editor?.getValue()}${lastWord}`
 			}
 		});
 
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+			// FIXME: Trigger only when click on editor
 			if (this.settings.backspaceDisabled) {
 				this.app.workspace.activeEditor?.editor?.setCursor(Number.MAX_SAFE_INTEGER)
 				this.alertBrainDumpModeIsOn();
@@ -81,21 +78,22 @@ export default class BrainDumpMode extends Plugin {
 
 		this.registerInterval(
 			window.setInterval(() => {
-			if (this.settings.runnerModeEnabled) {
-				this.calculateRecentWPT();
-			}
-		}, 1000)); // Check every 10 seconds
+				if (this.settings.runnerModeEnabled) {
+					this.calculateRecentWPT();
+				}
+			}, 100)
+		);
 
 	}
 
 	calculateRecentWPT() {
-		const SLIDING_WINDOW = 4000
+		const SLIDING_WINDOW = 5000
 		const SLIDING_WINDOW_IN_SECONDS = SLIDING_WINDOW / 1000;
 		const MULTIIPLE = 60 / SLIDING_WINDOW_IN_SECONDS;
 		const sometimeAgo = Date.now() - SLIDING_WINDOW;
 		this.wordTimestamps = this.wordTimestamps.filter(timestamp => timestamp > sometimeAgo);
-		const wordsInLast4Seconds = this.wordTimestamps.length;
-		this.statusBarItemEl.setText(`Typing speed: ${wordsInLast4Seconds * MULTIIPLE} CPM`);
+		const wordsInLastSeconds = this.wordTimestamps.length;
+		this.statusBarItemEl.setText(`Typing Speed: ${wordsInLastSeconds * MULTIIPLE} TPM`);
 	}
 
 	alertBrainDumpModeIsOn() {
@@ -105,7 +103,7 @@ export default class BrainDumpMode extends Plugin {
 			// `You can do this!`,
 			// TODO: Get from user
 		]
-		
+
 		new Notice(this.randomSelect(messages));
 	}
 
@@ -170,7 +168,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
 				)
 			);
 
-			new Setting(containerEl)
+		new Setting(containerEl)
 			.setName('Enable runner mode')
 			.setDesc("If turned on, runner mode enabled")
 			.addToggle(toggle => toggle
