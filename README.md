@@ -1,3 +1,5 @@
+[![Release Obsidian plugin](https://github.com/yesjinu/brain-dump-mode/actions/workflows/release.yaml/badge.svg)](https://github.com/yesjinu/brain-dump-mode/actions/workflows/release.yaml)
+
 # Brain Dump Mode
 
 ## Description
