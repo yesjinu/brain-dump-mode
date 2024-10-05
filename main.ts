@@ -272,6 +272,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(0, 2000, 50)
+          .setValue(this.plugin.settings.runnerMode.speedGoal)
           .setDynamicTooltip()
           .onChange(async (value) => {
             this.plugin.setTargetSpeed(value);
@@ -284,6 +285,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(500, 1500, 500)
+          .setValue(this.plugin.settings.runnerMode.tpmWindow)
           .setDynamicTooltip()
           .onChange(async (value) => {
             this.plugin.setWindow(value);
