@@ -1,13 +1,18 @@
 import { App, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { MINUTE_IN_MS, SECOND_IN_MS } from "./src/constants";
 
 interface BrainDumpSettings {
   backspaceDisabled: boolean;
   runnerModeEnabled: boolean;
+  speedGoal: number;
+  tpmWindow: number;
 }
 
 const DEFAULT_SETTINGS: BrainDumpSettings = {
   backspaceDisabled: false,
   runnerModeEnabled: false,
+  speedGoal: 1000,
+  tpmWindow: SECOND_IN_MS,
 };
 
 class StatusBarManager {
@@ -20,7 +25,7 @@ class StatusBarManager {
   }
 
   resetView() {
-    this.updateStatusBar(`🏊----------🦈: 0 types/min`);
+    this.updateStatusBar(`🏊~~~~~~~~~~|🦈: 0 types/min`);
   }
 
   updateView(speed: number) {
@@ -35,15 +40,17 @@ class StatusBarManager {
   renderSharkChasingSwimmer(targetSpeed: number, speed: number): string {
     const shark = "🦈";
     const swimmer = "🏊‍♂️";
-    let distance = 10;
+    const wave = "~";
+    const totalDistance = 10;
 
     const speedPercentage = (speed / targetSpeed) * 100;
 
-    if (speedPercentage < 100) {
-      distance = Math.round((speedPercentage / 100) * 10);
-    }
+    const distance =
+      speedPercentage > 100
+        ? totalDistance
+        : Math.round(speedPercentage / totalDistance);
 
-    return `${swimmer}${"-".repeat(distance)}${shark}${"-".repeat(
+    return `${swimmer}${wave.repeat(distance)}${shark}${wave.repeat(
       10 - distance
     )}`;
   }
@@ -57,16 +64,45 @@ class StatusBarManager {
   }
 }
 
+class SpeedMeter {
+  private wordTimestamps: number[] = [];
+  private window: number;
+
+  constructor(window: number = SECOND_IN_MS) {
+    this.window = window;
+  }
+
+  collectTypeEvt() {
+    const currentTime = Date.now();
+    this.wordTimestamps.push(currentTime);
+  }
+
+  getTpm(): number {
+    const multipleForMinute = MINUTE_IN_MS / this.window;
+    const diff = Date.now() - this.window;
+    this.wordTimestamps = this.wordTimestamps.filter(
+      (timestamp) => timestamp > diff
+    );
+    const wordsInLastSeconds = this.wordTimestamps.length;
+
+    return wordsInLastSeconds * multipleForMinute;
+  }
+
+  setWindow(window: number) {
+    this.window = window;
+  }
+}
+
 export default class BrainDumpMode extends Plugin {
   settings: BrainDumpSettings;
+  speedMeter: SpeedMeter;
   statusBarManager: StatusBarManager;
   lastSnapshot: string | undefined = undefined;
-  wordTimestamps: number[] = [];
   isBrainDumpModeOn = false;
 
   async onload() {
-    this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
-
+    this.settings = await { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
+    this.speedMeter = new SpeedMeter(this.settings.tpmWindow);
     // status bar
     this.statusBarManager = new StatusBarManager(this.addStatusBarItem());
 
@@ -94,8 +130,7 @@ export default class BrainDumpMode extends Plugin {
     // register 'keydown' event listeners
     this.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
       if (this.settings.runnerModeEnabled) {
-        const currentTime = Date.now();
-        this.wordTimestamps.push(currentTime);
+        this.speedMeter.collectTypeEvt();
       }
 
       if (this.settings.backspaceDisabled) {
@@ -130,24 +165,11 @@ export default class BrainDumpMode extends Plugin {
     this.registerInterval(
       window.setInterval(() => {
         if (this.settings.runnerModeEnabled) {
-          const tpm = this.calculateTPM();
+          const tpm = this.speedMeter.getTpm();
           this.statusBarManager.updateView(tpm);
         }
       }, 100)
     );
-  }
-
-  calculateTPM(): number {
-    const targetWindow = 1000;
-    const targetWindowSec = targetWindow / 1000;
-    const multipleForMinute = 60 / targetWindowSec;
-    const from = Date.now() - targetWindow;
-    this.wordTimestamps = this.wordTimestamps.filter(
-      (timestamp) => timestamp > from
-    );
-    const wordsInLastSeconds = this.wordTimestamps.length;
-
-    return wordsInLastSeconds * multipleForMinute;
   }
 
   noticeBrainDumpModeIsOn() {
@@ -156,13 +178,25 @@ export default class BrainDumpMode extends Plugin {
 
   toggleBrainDumpMode() {
     this.isBrainDumpModeOn = !this.isBrainDumpModeOn;
-    this.settings.backspaceDisabled = this.isBrainDumpModeOn;
-    this.settings.runnerModeEnabled = this.isBrainDumpModeOn;
-    if (!this.isBrainDumpModeOn) {
+
+    this.setBackspaceDisabled(this.isBrainDumpModeOn);
+    this.setRunnerModeEnabled(this.isBrainDumpModeOn);
+
+    this.saveSettings();
+    this.showNoticeTurnedOn();
+  }
+
+  setBackspaceDisabled(newValue: boolean) {
+    this.settings.backspaceDisabled = newValue;
+    this.saveSettings();
+  }
+
+  setRunnerModeEnabled(newValue: boolean) {
+    this.settings.runnerModeEnabled = newValue;
+    if (newValue == false) {
       this.statusBarManager.resetView();
     }
     this.saveSettings();
-    this.showNoticeTurnedOn();
   }
 
   async saveSettings() {
@@ -176,7 +210,13 @@ export default class BrainDumpMode extends Plugin {
   }
 
   setTargetSpeed(speed: number) {
+    this.settings.speedGoal = speed;
     this.statusBarManager.setTargetSpeed(speed);
+  }
+
+  setWindow(window: number) {
+    this.settings.tpmWindow = window;
+    this.speedMeter.setWindow(window);
   }
 }
 
@@ -200,8 +240,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
         toggle
           .setValue(this.plugin.settings.backspaceDisabled)
           .onChange(async (value) => {
-            this.plugin.settings.backspaceDisabled = value;
-            this.plugin.saveSettings();
+            this.plugin.setBackspaceDisabled(value);
           })
       );
 
@@ -212,20 +251,31 @@ class BrainDumpSettingTab extends PluginSettingTab {
         toggle
           .setValue(this.plugin.settings.runnerModeEnabled)
           .onChange(async (value) => {
-            this.plugin.settings.runnerModeEnabled = value;
-            this.plugin.saveSettings();
+            this.plugin.setRunnerModeEnabled(value);
           })
       );
 
     new Setting(containerEl)
-      .setName("Target speed")
-      .setDesc("Target speed for Brain Dump Mode")
+      .setName("Your speed goal in minutes")
+      .setDesc("Set your typing speed goal in minutes.")
       .addSlider((slider) =>
         slider
           .setLimits(0, 2000, 50)
           .setDynamicTooltip()
           .onChange(async (value) => {
             this.plugin.setTargetSpeed(value);
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Speed measure window (milliseconds)")
+      .setDesc("Set the window for measuring typing speed in milliseconds.")
+      .addSlider((slider) =>
+        slider
+          .setLimits(500, 1500, 500)
+          .setDynamicTooltip()
+          .onChange(async (value) => {
+            this.plugin.setWindow(value);
           })
       );
   }
