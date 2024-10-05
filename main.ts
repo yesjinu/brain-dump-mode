@@ -11,18 +11,45 @@ const DEFAULT_SETTINGS: BrainDumpSettings = {
 };
 
 class StatusBarManager {
-  el: HTMLElement | undefined;
+  private el: HTMLElement | undefined;
+  private targetSpeed: number;
 
-  constructor(el: HTMLElement) {
+  constructor(el: HTMLElement, targetSpeed = 500) {
     this.el = el;
+    this.targetSpeed = targetSpeed;
   }
 
   resetView() {
-    this.updateStatusBar(`---------------------------`);
+    this.updateStatusBar(`🏊----------🦈: 0 types/min`);
   }
 
-  updateView(tpm: number) {
-    this.updateStatusBar(`Typing Speed: ${tpm} TPM`);
+  updateView(speed: number) {
+    this.updateStatusBar(
+      `${this.renderSharkChasingSwimmer(
+        this.targetSpeed,
+        speed
+      )}: ${speed} types/min`
+    );
+  }
+
+  renderSharkChasingSwimmer(targetSpeed: number, speed: number): string {
+    const shark = "🦈";
+    const swimmer = "🏊‍♂️";
+    let distance = 10;
+
+    const speedPercentage = (speed / targetSpeed) * 100;
+
+    if (speedPercentage < 100) {
+      distance = Math.round((speedPercentage / 100) * 10);
+    }
+
+    return `${swimmer}${"-".repeat(distance)}${shark}${"-".repeat(
+      10 - distance
+    )}`;
+  }
+
+  setTargetSpeed(speed: number) {
+    this.targetSpeed = speed;
   }
 
   private updateStatusBar(text: string) {
@@ -111,7 +138,7 @@ export default class BrainDumpMode extends Plugin {
   }
 
   calculateTPM(): number {
-    const targetWindow = 5000;
+    const targetWindow = 1000;
     const targetWindowSec = targetWindow / 1000;
     const multipleForMinute = 60 / targetWindowSec;
     const from = Date.now() - targetWindow;
@@ -146,6 +173,10 @@ export default class BrainDumpMode extends Plugin {
     new Notice(
       `Brain Dump Mode ${this.settings.backspaceDisabled ? "✅" : "❌"}`
     );
+  }
+
+  setTargetSpeed(speed: number) {
+    this.statusBarManager.setTargetSpeed(speed);
   }
 }
 
@@ -183,6 +214,18 @@ class BrainDumpSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.runnerModeEnabled = value;
             this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Target speed")
+      .setDesc("Target speed for Brain Dump Mode")
+      .addSlider((slider) =>
+        slider
+          .setLimits(0, 2000, 50)
+          .setDynamicTooltip()
+          .onChange(async (value) => {
+            this.plugin.setTargetSpeed(value);
           })
       );
   }
