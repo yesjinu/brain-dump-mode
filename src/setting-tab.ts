@@ -26,13 +26,13 @@ export class BrainDumpSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Enable runner mode")
-      .setDesc("If turned on, runner mode enabled")
+      .setName("Enable shark mode")
+      .setDesc("Escape from the shark by typing fast 🦈")
       .addToggle((toggle) =>
         toggle
-          .setValue(this.plugin.settings.runnerMode.enabled)
+          .setValue(this.plugin.settings.sharkMode.enabled)
           .onChange(async (value) => {
-            this.plugin.setRunnerModeEnabled(value);
+            this.plugin.setSharkModeEnabled(value);
           })
       );
 
@@ -42,7 +42,7 @@ export class BrainDumpSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(0, 2000, 50)
-          .setValue(this.plugin.settings.runnerMode.speedGoal)
+          .setValue(this.plugin.settings.sharkMode.speedGoal)
           .setDynamicTooltip()
           .onChange(async (value) => {
             this.plugin.setTargetSpeed(value);
@@ -55,7 +55,7 @@ export class BrainDumpSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(500, 1500, 500)
-          .setValue(this.plugin.settings.runnerMode.tpmWindow)
+          .setValue(this.plugin.settings.sharkMode.tpmWindow)
           .setDynamicTooltip()
           .onChange(async (value) => {
             this.plugin.setWindow(value);

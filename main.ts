@@ -8,7 +8,7 @@ interface BrainDumpSettings {
   noBackspaceMode: {
     enabled: boolean;
   };
-  runnerMode: {
+  sharkMode: {
     enabled: boolean;
     speedGoal: number;
     tpmWindow: number;
@@ -19,7 +19,7 @@ const DEFAULT_SETTINGS: BrainDumpSettings = {
   noBackspaceMode: {
     enabled: false,
   },
-  runnerMode: {
+  sharkMode: {
     enabled: false,
     speedGoal: 1000,
     tpmWindow: SECOND_IN_MS,
@@ -35,7 +35,7 @@ export default class BrainDumpMode extends Plugin {
 
   async onload() {
     this.settings = await { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
-    this.speedMeter = new SpeedMeter(this.settings.runnerMode.tpmWindow);
+    this.speedMeter = new SpeedMeter(this.settings.sharkMode.tpmWindow);
     // status bar
     this.statusBarManager = new StatusBarManager(this.addStatusBarItem());
 
@@ -62,7 +62,7 @@ export default class BrainDumpMode extends Plugin {
 
     // register 'keydown' event listeners
     this.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
-      if (this.settings.runnerMode.enabled) {
+      if (this.settings.sharkMode.enabled) {
         this.speedMeter.collectTypeEvt();
       }
 
@@ -97,7 +97,7 @@ export default class BrainDumpMode extends Plugin {
     // register interval for calculating typing speed
     this.registerInterval(
       window.setInterval(() => {
-        if (this.settings.runnerMode.enabled) {
+        if (this.settings.sharkMode.enabled) {
           const tpm = this.speedMeter.getTpm();
           this.statusBarManager.updateView(tpm);
         }
@@ -113,7 +113,7 @@ export default class BrainDumpMode extends Plugin {
     this.isBrainDumpModeOn = !this.isBrainDumpModeOn;
 
     this.setBackspaceDisabled(this.isBrainDumpModeOn);
-    this.setRunnerModeEnabled(this.isBrainDumpModeOn);
+    this.setSharkModeEnabled(this.isBrainDumpModeOn);
 
     this.saveSettings();
     this.showNoticeTurnedOn();
@@ -124,8 +124,8 @@ export default class BrainDumpMode extends Plugin {
     this.saveSettings();
   }
 
-  setRunnerModeEnabled(newValue: boolean) {
-    this.settings.runnerMode.enabled = newValue;
+  setSharkModeEnabled(newValue: boolean) {
+    this.settings.sharkMode.enabled = newValue;
     if (newValue == false) {
       this.statusBarManager.resetView();
     }
@@ -143,12 +143,12 @@ export default class BrainDumpMode extends Plugin {
   }
 
   setTargetSpeed(speed: number) {
-    this.settings.runnerMode.speedGoal = speed;
+    this.settings.sharkMode.speedGoal = speed;
     this.statusBarManager.setTargetSpeed(speed);
   }
 
   setWindow(window: number) {
-    this.settings.runnerMode.tpmWindow = window;
+    this.settings.sharkMode.tpmWindow = window;
     this.speedMeter.setWindow(window);
   }
 }
