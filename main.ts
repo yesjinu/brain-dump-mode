@@ -267,8 +267,8 @@ class BrainDumpSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Your speed goal in minutes")
-      .setDesc("Set your typing speed goal in minutes.")
+      .setName("Your speed goal (minute)")
+      .setDesc("How fast can you type?")
       .addSlider((slider) =>
         slider
           .setLimits(0, 2000, 50)
@@ -281,7 +281,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Speed measure window (milliseconds)")
-      .setDesc("Set the window for measuring typing speed in milliseconds.")
+      .setDesc("Lower, the harder.")
       .addSlider((slider) =>
         slider
           .setLimits(500, 1500, 500)
