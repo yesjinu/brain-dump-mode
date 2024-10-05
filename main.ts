@@ -1,5 +1,8 @@
-import { App, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
-import { MINUTE_IN_MS, SECOND_IN_MS } from "./src/constants";
+import { Notice, Plugin } from "obsidian";
+import { SECOND_IN_MS } from "./src/constants";
+import { SpeedMeter } from "./src/speed-meter";
+import { StatusBarManager } from "./src/status-bar-manager";
+import { BrainDumpSettingTab } from "./src/setting-tab";
 
 interface BrainDumpSettings {
   noBackspaceMode: {
@@ -22,87 +25,6 @@ const DEFAULT_SETTINGS: BrainDumpSettings = {
     tpmWindow: SECOND_IN_MS,
   },
 };
-
-class StatusBarManager {
-  private el: HTMLElement | undefined;
-  private targetSpeed: number;
-
-  constructor(el: HTMLElement, targetSpeed = 500) {
-    this.el = el;
-    this.targetSpeed = targetSpeed;
-  }
-
-  resetView() {
-    this.updateStatusBar(`🏊~~~~~~~~~~|🦈: 0 types/min`);
-  }
-
-  updateView(speed: number) {
-    this.updateStatusBar(
-      `${this.renderSharkChasingSwimmer(
-        this.targetSpeed,
-        speed
-      )}: ${speed} types/min`
-    );
-  }
-
-  renderSharkChasingSwimmer(targetSpeed: number, speed: number): string {
-    const shark = "🦈";
-    const aliveSwimmer = "🏊‍♂️";
-    const deadSwimmer = "🩸";
-    const wave = "~";
-    const totalDistance = 10;
-
-    const speedPercentage = (speed / targetSpeed) * 100;
-
-    const distance =
-      speedPercentage > 100
-        ? totalDistance
-        : Math.round(speedPercentage / totalDistance);
-
-    const swimmer = distance === 0 ? deadSwimmer : aliveSwimmer;
-
-    return `${swimmer}${wave.repeat(distance)}${shark}${wave.repeat(
-      totalDistance - distance
-    )}`;
-  }
-
-  setTargetSpeed(speed: number) {
-    this.targetSpeed = speed;
-  }
-
-  private updateStatusBar(text: string) {
-    this.el?.setText(text);
-  }
-}
-
-class SpeedMeter {
-  private wordTimestamps: number[] = [];
-  private window: number;
-
-  constructor(window: number = SECOND_IN_MS) {
-    this.window = window;
-  }
-
-  collectTypeEvt() {
-    const currentTime = Date.now();
-    this.wordTimestamps.push(currentTime);
-  }
-
-  getTpm(): number {
-    const multipleForMinute = MINUTE_IN_MS / this.window;
-    const diff = Date.now() - this.window;
-    this.wordTimestamps = this.wordTimestamps.filter(
-      (timestamp) => timestamp > diff
-    );
-    const wordsInLastSeconds = this.wordTimestamps.length;
-
-    return wordsInLastSeconds * multipleForMinute;
-  }
-
-  setWindow(window: number) {
-    this.window = window;
-  }
-}
 
 export default class BrainDumpMode extends Plugin {
   settings: BrainDumpSettings;
@@ -228,68 +150,5 @@ export default class BrainDumpMode extends Plugin {
   setWindow(window: number) {
     this.settings.runnerMode.tpmWindow = window;
     this.speedMeter.setWindow(window);
-  }
-}
-
-class BrainDumpSettingTab extends PluginSettingTab {
-  plugin: BrainDumpMode;
-
-  constructor(app: App, plugin: BrainDumpMode) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-
-  display(): void {
-    const { containerEl } = this;
-
-    containerEl.empty();
-
-    new Setting(containerEl)
-      .setName("Enable brain dump mode")
-      .setDesc("If turned on, delete key will be disabled")
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.noBackspaceMode.enabled)
-          .onChange(async (value) => {
-            this.plugin.setBackspaceDisabled(value);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName("Enable runner mode")
-      .setDesc("If turned on, runner mode enabled")
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.runnerMode.enabled)
-          .onChange(async (value) => {
-            this.plugin.setRunnerModeEnabled(value);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName("Your speed goal (minute)")
-      .setDesc("How fast can you type?")
-      .addSlider((slider) =>
-        slider
-          .setLimits(0, 2000, 50)
-          .setValue(this.plugin.settings.runnerMode.speedGoal)
-          .setDynamicTooltip()
-          .onChange(async (value) => {
-            this.plugin.setTargetSpeed(value);
-          })
-      );
-
-    new Setting(containerEl)
-      .setName("Speed measure window (milliseconds)")
-      .setDesc("Lower, the harder.")
-      .addSlider((slider) =>
-        slider
-          .setLimits(500, 1500, 500)
-          .setValue(this.plugin.settings.runnerMode.tpmWindow)
-          .setDynamicTooltip()
-          .onChange(async (value) => {
-            this.plugin.setWindow(value);
-          })
-      );
   }
 }
