@@ -106,7 +106,7 @@ export default class BrainDumpMode extends Plugin {
   }
 
   noticeBrainDumpModeIsOn() {
-    new Notice(`Brain Dump Mode 🔥 Backspace DISABLED`);
+    new Notice(`Backspace DISABLED`);
   }
 
   toggleBrainDumpMode() {
