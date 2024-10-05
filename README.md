@@ -1,6 +1,12 @@
 [![Release Obsidian plugin](https://github.com/yesjinu/brain-dump-mode/actions/workflows/release.yaml/badge.svg)](https://github.com/yesjinu/brain-dump-mode/actions/workflows/release.yaml)
 
-# Brain Dump Mode
+# Brain Dump Mode 🤯
+
+![image](public/image.png)
+
+1. We kindly **DISABLE your delete key** to help you focus on COMPLETING your first draft. We call it the 'Brain Dump Mode' 🤯
+2. You can activate 'Brain Dump Mode' with sidebar train icon 🚅
+3. Shark 🦈 will chase you 🏊 if your typing speed is too slow 🩸
 
 ## Description
 
@@ -9,8 +15,7 @@
 ## Features
 
 - **Disable Delete Key:** Prevents the use of the Backspace and Delete keys to encourage continuous writing.
-- **Focus on Writing:** Helps you get your thoughts down without the distraction of editing.
-- **Easy to Use:** Simply toggle Brain Dump Mode on or off as needed.
+- **Shark Mode:** A shark will chase you if you type too slowly, motivating you to keep writing.
 
 ## Use Cases
 
