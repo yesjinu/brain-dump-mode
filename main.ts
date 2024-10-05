@@ -2,17 +2,25 @@ import { App, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { MINUTE_IN_MS, SECOND_IN_MS } from "./src/constants";
 
 interface BrainDumpSettings {
-  backspaceDisabled: boolean;
-  runnerModeEnabled: boolean;
-  speedGoal: number;
-  tpmWindow: number;
+  noBackspaceMode: {
+    enabled: boolean;
+  };
+  runnerMode: {
+    enabled: boolean;
+    speedGoal: number;
+    tpmWindow: number;
+  };
 }
 
 const DEFAULT_SETTINGS: BrainDumpSettings = {
-  backspaceDisabled: false,
-  runnerModeEnabled: false,
-  speedGoal: 1000,
-  tpmWindow: SECOND_IN_MS,
+  noBackspaceMode: {
+    enabled: false,
+  },
+  runnerMode: {
+    enabled: false,
+    speedGoal: 1000,
+    tpmWindow: SECOND_IN_MS,
+  },
 };
 
 class StatusBarManager {
@@ -102,7 +110,7 @@ export default class BrainDumpMode extends Plugin {
 
   async onload() {
     this.settings = await { ...DEFAULT_SETTINGS, ...(await this.loadData()) };
-    this.speedMeter = new SpeedMeter(this.settings.tpmWindow);
+    this.speedMeter = new SpeedMeter(this.settings.runnerMode.tpmWindow);
     // status bar
     this.statusBarManager = new StatusBarManager(this.addStatusBarItem());
 
@@ -129,11 +137,11 @@ export default class BrainDumpMode extends Plugin {
 
     // register 'keydown' event listeners
     this.registerDomEvent(document, "keydown", (evt: KeyboardEvent) => {
-      if (this.settings.runnerModeEnabled) {
+      if (this.settings.runnerMode.enabled) {
         this.speedMeter.collectTypeEvt();
       }
 
-      if (this.settings.backspaceDisabled) {
+      if (this.settings.noBackspaceMode.enabled) {
         if (evt.key === "ArrowLeft" || evt.key === "ArrowUp") {
           // Disable moving cursor to left or up
           this.app.workspace.activeEditor?.editor?.setCursor(
@@ -164,7 +172,7 @@ export default class BrainDumpMode extends Plugin {
     // register interval for calculating typing speed
     this.registerInterval(
       window.setInterval(() => {
-        if (this.settings.runnerModeEnabled) {
+        if (this.settings.runnerMode.enabled) {
           const tpm = this.speedMeter.getTpm();
           this.statusBarManager.updateView(tpm);
         }
@@ -187,12 +195,12 @@ export default class BrainDumpMode extends Plugin {
   }
 
   setBackspaceDisabled(newValue: boolean) {
-    this.settings.backspaceDisabled = newValue;
+    this.settings.noBackspaceMode.enabled = newValue;
     this.saveSettings();
   }
 
   setRunnerModeEnabled(newValue: boolean) {
-    this.settings.runnerModeEnabled = newValue;
+    this.settings.runnerMode.enabled = newValue;
     if (newValue == false) {
       this.statusBarManager.resetView();
     }
@@ -205,17 +213,17 @@ export default class BrainDumpMode extends Plugin {
 
   showNoticeTurnedOn() {
     new Notice(
-      `Brain Dump Mode ${this.settings.backspaceDisabled ? "✅" : "❌"}`
+      `Brain Dump Mode ${this.settings.noBackspaceMode.enabled ? "✅" : "❌"}`
     );
   }
 
   setTargetSpeed(speed: number) {
-    this.settings.speedGoal = speed;
+    this.settings.runnerMode.speedGoal = speed;
     this.statusBarManager.setTargetSpeed(speed);
   }
 
   setWindow(window: number) {
-    this.settings.tpmWindow = window;
+    this.settings.runnerMode.tpmWindow = window;
     this.speedMeter.setWindow(window);
   }
 }
@@ -238,7 +246,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
       .setDesc("If turned on, delete key will be disabled")
       .addToggle((toggle) =>
         toggle
-          .setValue(this.plugin.settings.backspaceDisabled)
+          .setValue(this.plugin.settings.noBackspaceMode.enabled)
           .onChange(async (value) => {
             this.plugin.setBackspaceDisabled(value);
           })
@@ -249,7 +257,7 @@ class BrainDumpSettingTab extends PluginSettingTab {
       .setDesc("If turned on, runner mode enabled")
       .addToggle((toggle) =>
         toggle
-          .setValue(this.plugin.settings.runnerModeEnabled)
+          .setValue(this.plugin.settings.runnerMode.enabled)
           .onChange(async (value) => {
             this.plugin.setRunnerModeEnabled(value);
           })
