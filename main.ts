@@ -47,7 +47,8 @@ class StatusBarManager {
 
   renderSharkChasingSwimmer(targetSpeed: number, speed: number): string {
     const shark = "🦈";
-    const swimmer = "🏊‍♂️";
+    const aliveSwimmer = "🏊‍♂️";
+    const deadSwimmer = "🩸";
     const wave = "~";
     const totalDistance = 10;
 
@@ -58,8 +59,10 @@ class StatusBarManager {
         ? totalDistance
         : Math.round(speedPercentage / totalDistance);
 
+    const swimmer = distance === 0 ? deadSwimmer : aliveSwimmer;
+
     return `${swimmer}${wave.repeat(distance)}${shark}${wave.repeat(
-      10 - distance
+      totalDistance - distance
     )}`;
   }
 
