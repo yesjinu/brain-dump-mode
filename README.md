@@ -8,6 +8,9 @@
 2. You can activate 'Brain Dump Mode' with sidebar train icon 🚅
 3. Shark 🦈 will chase you 🏊 if your typing speed is too slow 🩸
 
+![Nov-12-2024 22-25-40](https://github.com/user-attachments/assets/b9f78370-f771-4c35-8a9d-097f6bce050f)
+
+
 ## Description
 
 **Done is better than perfect.** Brain Dump Mode helps you complete your first messy draft without the temptation to edit. Once activated, your delete key will be DISABLED, forcing you to keep writing and just burn your keyboards 🔥.
